@@ -14,7 +14,7 @@ type Parser struct {
 }
 
 func (p *Parser) hasMoreCommands() bool {
-	return p.currentCommandIndex < len(p.allLines)-1
+	return p.currentCommandIndex < len(p.allLines)
 }
 
 func (p *Parser) advance() {
@@ -52,7 +52,7 @@ func (p *Parser) dest() string {
 	if strings.Contains(currentCommand, "=") {
 		return strings.Split(currentCommand, "=")[0]
 	} else {
-		return ""
+		return "null"
 	}
 }
 
@@ -60,14 +60,36 @@ func (p *Parser) comp() string {
 	if p.commandType() != "C_COMMAND" {
 		log.Fatal("Cannot call comp() on a non-C_COMMAND")
 	}
-	return ""
+	currentCommand := p.allLines[p.currentCommandIndex]
+
+	if strings.Contains(currentCommand, "=") {
+		// If there is a dest mnemonic, split by "=" and take the second part
+		if strings.Contains(currentCommand, ";") {
+			// dest=comp;jump
+			cj := strings.Split(currentCommand, "=")[1]
+			return strings.Split(cj, ";")[0]
+		} else {
+			// dest=comp
+			return strings.Split(currentCommand, "=")[1]
+		}
+
+	} else {
+		return strings.Split(currentCommand, ";")[0]
+	}
 }
 
 func (p *Parser) jump() string {
 	if p.commandType() != "C_COMMAND" {
 		log.Fatal("Cannot call jump() on a non-C_COMMAND")
 	}
-	return ""
+	currentCommand := p.allLines[p.currentCommandIndex]
+	// Check if there is a jump mnemonic
+	if strings.Contains(currentCommand, ";") {
+		return strings.Split(currentCommand, ";")[1]
+	} else {
+		return "null"
+	}
+
 }
 
 func NewParser(inputFileStream *os.File) *Parser {
